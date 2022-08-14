@@ -10,7 +10,11 @@ wants new work done (and that the old list of scheduled dates is no longer valid
 
 We can use these events to invalidate old state. So, suppose we get a new `ScheduledTweet`. Here, we could simply publish an event with all the existing, unfinished dates _and_ whatever new ones have been added. This will have the effect of cancelling any existing work and enqueing the new stuff. If the existing stuff to be done finishes, and there  are no more callbacks to trigger, then nothing gets done and that's OK. 
 
+
+
+
 ## To Do: 
+
 
  * tests 
  * move this to Maven Central so that it's more accessible?  
