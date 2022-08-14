@@ -32,6 +32,7 @@ class SchedulingService implements Runnable {
 			var cancelled = scheduledFuture.cancel(true);
 			Assert.isTrue(cancelled || scheduledFuture.isDone() || scheduledFuture.isCancelled(),
 					"the future must at some point complete.");
+			log.debug("we managed to cancel the " + ScheduledFuture.class.getName());
 		}
 		var schedule = this.taskScheduler.schedule(this, new ScheduleTrigger(list));
 		this.future.set(schedule);
