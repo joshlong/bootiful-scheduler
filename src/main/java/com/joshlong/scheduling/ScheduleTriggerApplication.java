@@ -2,6 +2,7 @@ package com.joshlong.scheduling;
 
 import com.joshlong.scheduling.engine.ScheduleEvent;
 import com.joshlong.scheduling.engine.ScheduleRefreshEvent;
+import com.joshlong.scheduling.utils.DateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
@@ -16,7 +17,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @SpringBootApplication
@@ -57,14 +57,6 @@ class SchedulingHttpController {
 	public void schedule(ScheduleEvent scheduleEvent) {
 		var date = scheduleEvent.getSource();
 		log.info("got a callback for " + date);
-	}
-
-}
-
-abstract class DateUtils {
-
-	static Date secondsLater(Date now, int seconds) {
-		return Date.from(now.toInstant().plus(seconds, TimeUnit.SECONDS.toChronoUnit()));
 	}
 
 }
