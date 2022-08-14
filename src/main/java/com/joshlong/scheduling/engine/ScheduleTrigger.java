@@ -12,24 +12,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 class ScheduleTrigger implements Trigger {
 
-    private final List<Date> dates;
+	private final List<Date> dates;
 
-    private final AtomicInteger offset = new AtomicInteger(0);
+	private final AtomicInteger offset = new AtomicInteger(0);
 
-    ScheduleTrigger(List<Date> dates) {
-        this.dates = dates.stream()
-                .distinct()
-                .sorted(Date::compareTo)
-                .toList();
-    }
+	ScheduleTrigger(List<Date> dates) {
+		this.dates = dates.stream().distinct().sorted(Date::compareTo).toList();
+	}
 
-    @Override
-    public Date nextExecutionTime(TriggerContext triggerContext) {
-        var offset = this.offset.getAndIncrement();
-        var returnDate = (Date) null;
-        if (offset < this.dates.size())
-            returnDate = this.dates.get(offset);
-        log.debug(Map.of("offset", offset, "returnDate", null == returnDate ? "" : returnDate.toInstant().toString()).toString());
-        return returnDate;
-    }
+	@Override
+	public Date nextExecutionTime(TriggerContext triggerContext) {
+		var offset = this.offset.getAndIncrement();
+		var returnDate = (Date) null;
+		if (offset < this.dates.size())
+			returnDate = this.dates.get(offset);
+		log.debug(Map.of("offset", offset, "returnDate", null == returnDate ? "" : returnDate.toInstant().toString())
+				.toString());
+		return returnDate;
+	}
+
 }

@@ -9,14 +9,14 @@ import org.springframework.scheduling.TaskScheduler;
 @Configuration
 class SchedulingConfiguration {
 
-    @Bean
-    TaskScheduler taskScheduler() {
-        return new TaskSchedulerBuilder().poolSize(10).build();
-    }
+	@Bean
+	TaskScheduler taskScheduler() {
+		return new TaskSchedulerBuilder().poolSize(10).build();
+	}
 
-    @Bean
-    SchedulingService schedulingService(ApplicationEventPublisher publisher, TaskScheduler taskScheduler) {
-        return new SchedulingService(publisher, taskScheduler);
-    }
+	@Bean
+	SchedulingService schedulingService(ApplicationEventPublisher publisher, TaskScheduler taskScheduler) {
+		return new SchedulingService(publisher, taskScheduler);
+	}
 
 }

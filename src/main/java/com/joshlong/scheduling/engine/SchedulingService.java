@@ -13,31 +13,33 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 class SchedulingService implements Runnable {
 
-    private final TaskScheduler taskScheduler;
+	private final TaskScheduler taskScheduler;
 
-    private final ApplicationEventPublisher publisher;
+	private final ApplicationEventPublisher publisher;
 
-    private final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<>();
+	private final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<>();
 
-    SchedulingService(ApplicationEventPublisher publisher, TaskScheduler taskScheduler) {
-        this.taskScheduler = taskScheduler;
-        this.publisher = publisher;
-    }
+	SchedulingService(ApplicationEventPublisher publisher, TaskScheduler taskScheduler) {
+		this.taskScheduler = taskScheduler;
+		this.publisher = publisher;
+	}
 
-    @EventListener
-    public void refreshSchedule(ScheduleRefreshEvent event) {
-        var list = event.getSource();
-        var scheduledFuture = this.future.get();
-        if (scheduledFuture != null) {
-            var cancelled = scheduledFuture.cancel(true);
-            Assert.isTrue(cancelled || scheduledFuture.isDone() || scheduledFuture.isCancelled(), "the future must at some point complete.");
-        }
-        var schedule = this.taskScheduler.schedule(this, new ScheduleTrigger(list));
-        this.future.set(schedule);
-    }
+	@EventListener
+	public void refreshSchedule(ScheduleRefreshEvent event) {
+		var list = event.getSource();
+		var scheduledFuture = this.future.get();
+		if (scheduledFuture != null) {
+			var cancelled = scheduledFuture.cancel(true);
+			Assert.isTrue(cancelled || scheduledFuture.isDone() || scheduledFuture.isCancelled(),
+					"the future must at some point complete.");
+		}
+		var schedule = this.taskScheduler.schedule(this, new ScheduleTrigger(list));
+		this.future.set(schedule);
+	}
 
-    @Override
-    public void run() {
-        this.publisher.publishEvent(new ScheduleEvent(new Date()));
-    }
+	@Override
+	public void run() {
+		this.publisher.publishEvent(new ScheduleEvent(new Date()));
+	}
+
 }

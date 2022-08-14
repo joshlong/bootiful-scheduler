@@ -7,13 +7,14 @@ import java.util.List;
 
 public class ScheduleRefreshEvent extends ApplicationEvent {
 
-    public ScheduleRefreshEvent(List<Date> list) {
-        super(list);
-    }
+	public ScheduleRefreshEvent(List<Date> list) {
+		super(list);
+	}
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public List<Date> getSource() {
-        return (List<Date>) super.getSource();
-    }
+	@Override
+	@SuppressWarnings("unchecked")
+	public List<Date> getSource() {
+		return (List<Date>) super.getSource();
+	}
+
 }
