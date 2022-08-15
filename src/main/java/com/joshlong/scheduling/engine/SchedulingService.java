@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.util.Assert;
 
 import java.util.Date;
 import java.util.concurrent.ScheduledFuture;
@@ -13,43 +12,51 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 class SchedulingService implements Runnable {
 
-    private final TaskScheduler taskScheduler;
+	private final ScheduleTrigger trigger;
 
-    private final ApplicationEventPublisher publisher;
+	private final TaskScheduler taskScheduler;
 
-    private final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<>();
+	private final ApplicationEventPublisher publisher;
 
-    private final AtomicReference<Date> publicationTime = new AtomicReference<>();
+	private final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<>();
 
-    SchedulingService(ApplicationEventPublisher publisher, TaskScheduler taskScheduler) {
-        this.taskScheduler = taskScheduler;
-        this.publisher = publisher;
-    }
+	private final AtomicReference<Date> publicationTime;
 
-    private static boolean isFinished(ScheduledFuture<?> scheduledFuture) {
-        return scheduledFuture.isCancelled() || scheduledFuture.isDone();
-    }
+	SchedulingService(AtomicReference<Date> publicationTime, ScheduleTrigger trigger,
+			ApplicationEventPublisher publisher, TaskScheduler taskScheduler) {
+		this.taskScheduler = taskScheduler;
+		this.publicationTime = publicationTime;
+		this.trigger = trigger;
+		this.publisher = publisher;
+	}
 
-    @EventListener
-    public void refreshSchedule(ScheduleRefreshEvent event) {
-        var list = event.getSource();
-        var scheduledFuture = this.future.get();
-        if (scheduledFuture != null) {
-            if (!isFinished(scheduledFuture)) {
-                var completed = scheduledFuture.cancel(true) || isFinished(scheduledFuture);
-                Assert.isTrue(completed, "the " + ScheduledFuture.class.getName() + " must at some point complete.");
-                log.debug("we managed to cancel the " + ScheduledFuture.class.getName());
-            }
-        }
-        var scheduleTrigger = new ScheduleTrigger(this.publicationTime, list);
-        var schedule = this.taskScheduler.schedule(this, scheduleTrigger);
-        this.future.set(schedule);
-    }
+	private static boolean isFinished(ScheduledFuture<?> scheduledFuture) {
+		if (null == scheduledFuture)
+			return true;
+		return scheduledFuture.isCancelled() || scheduledFuture.isDone();
+	}
 
-    @Override
-    public void run() {
-        var date = this.publicationTime.get();
-        this.publisher.publishEvent(new ScheduleEvent(date));
-    }
+	private final Object monitor = new Object();
+
+	@EventListener(ScheduleRefreshEvent.class)
+	public void refreshSchedule() {
+		synchronized (this.monitor) {
+			var scheduledFuture = this.future.get();
+			if (scheduledFuture == null || isFinished(scheduledFuture)) {
+				log.debug("no schedule thread");
+				var schedule = this.taskScheduler.schedule(this, this.trigger);
+				this.future.set(schedule);
+			} //
+			else {
+				log.debug("already have a schedule thread");
+			}
+		}
+	}
+
+	@Override
+	public void run() {
+		var date = this.publicationTime.get();
+		this.publisher.publishEvent(new ScheduleEvent(date));
+	}
 
 }
