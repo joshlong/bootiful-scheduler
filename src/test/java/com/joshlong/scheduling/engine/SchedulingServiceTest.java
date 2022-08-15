@@ -30,12 +30,12 @@ class SchedulingServiceTest {
 		this.test = test;
 	}
 
-	private void emit(Date d) {
+	private void date(Date d) {
 		this.publisher.publishEvent(new ScheduleRefreshEvent(List.of(d)));
 	}
 
 	@SneakyThrows
-	private void wait(int seconds) {
+	private static void pause(long seconds) {
 		Thread.sleep(seconds * 1000);
 	}
 
@@ -45,14 +45,16 @@ class SchedulingServiceTest {
 		var now = new Date();
 
 		var next = DateUtils.secondsLater(now, 5);
-		emit(next);
-		wait(6);
+		date(next);
+		pause(6);
 		Assertions.assertEquals(this.test.count.get(), 1);
 
-		emit(DateUtils.secondsLater(now, 8));
-		emit(DateUtils.secondsLater(now, 9));
-		wait(10);
-		Assertions.assertEquals(this.test.count.get(), 3);
+		date(DateUtils.secondsLater(now, 8));
+		var dupe = DateUtils.secondsLater(now, 9);
+		date(dupe);
+		date(dupe);
+		pause(10);
+		Assertions.assertEquals(this.test.count.get(), 3); // not 4!
 
 	}
 

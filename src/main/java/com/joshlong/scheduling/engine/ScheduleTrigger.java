@@ -25,27 +25,34 @@ class ScheduleTrigger implements Trigger {
 
 	private final AtomicReference<Date> dateAtomicReference;
 
+	private final Object monitor = new Object();
+
 	ScheduleTrigger(AtomicReference<Date> dateThreadLocal) {
 		this.dateAtomicReference = dateThreadLocal;
 	}
 
 	@EventListener
 	public void refresh(ScheduleRefreshEvent event) {
-		this.offset.set(0);
-		var now = new Date();
-		var dates = event.getSource().stream().distinct().sorted(Date::compareTo).filter(d -> d.after(now)).toList();
-		this.datesAtomicReference.set(dates);
+		synchronized (this.monitor) {
+			this.offset.set(0);
+			var now = new Date();
+			var dates = event.getSource().stream().distinct().sorted(Date::compareTo).filter(d -> d.after(now))
+					.toList();
+			this.datesAtomicReference.set(dates);
+		}
 	}
 
 	@Override
 	public Date nextExecutionTime(TriggerContext triggerContext) {
-		var dates = this.datesAtomicReference.get();
-		var offset = this.offset.getAndIncrement();
-		var returnDate = (Date) null;
-		if (offset < dates.size())
-			returnDate = dates.get(offset);
-		this.dateAtomicReference.set(returnDate);
-		return returnDate;
+		synchronized (this.monitor) {
+			var dates = this.datesAtomicReference.get();
+			var offset = this.offset.getAndIncrement();
+			var returnDate = (Date) null;
+			if (offset < dates.size())
+				returnDate = dates.get(offset);
+			this.dateAtomicReference.set(returnDate);
+			return returnDate;
+		}
 	}
 
 }
