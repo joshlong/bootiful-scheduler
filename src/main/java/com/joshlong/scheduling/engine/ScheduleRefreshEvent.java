@@ -2,19 +2,26 @@ package com.joshlong.scheduling.engine;
 
 import org.springframework.context.ApplicationEvent;
 
-import java.util.Date;
+import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
+/**
+ * An event published by application code to introduce new scheduled {@link Instant
+ * instants} to the schedule
+ *
+ * @author Josh Long
+ */
 public class ScheduleRefreshEvent extends ApplicationEvent {
 
-	public ScheduleRefreshEvent(List<Date> list) {
-		super(list);
+	public ScheduleRefreshEvent(Collection<Instant> instants) {
+		super(instants);
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public List<Date> getSource() {
-		return (List<Date>) super.getSource();
+	public List<Instant> getSource() {
+		return (List<Instant>) super.getSource();
 	}
 
 }

@@ -6,13 +6,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Installs the relevant infrastructure for our
+ * {@link org.springframework.scheduling.Trigger}-powered scheduling engine.
+ *
+ * This is Spring Boot autoconfiguration - there's nothing for the consumer to use,
+ * really.
+ *
+ * @author Josh Long
+ */
 @Configuration
-class SchedulingConfiguration {
+class SchedulingAutoConfiguration {
 
-	private final AtomicReference<Date> dateAtomicReference = new AtomicReference<>();
+	private final AtomicReference<Instant> dateAtomicReference = new AtomicReference<>();
 
 	@Bean
 	TaskScheduler taskScheduler() {
@@ -25,9 +34,9 @@ class SchedulingConfiguration {
 	}
 
 	@Bean
-	SchedulingService schedulingService(ScheduleTrigger trigger, ApplicationEventPublisher publisher,
+	DefaultSchedulingService schedulingService(ScheduleTrigger trigger, ApplicationEventPublisher publisher,
 			TaskScheduler taskScheduler) {
-		return new SchedulingService(this.dateAtomicReference, trigger, publisher, taskScheduler);
+		return new DefaultSchedulingService(this.dateAtomicReference, trigger, publisher, taskScheduler);
 	}
 
 }

@@ -5,13 +5,15 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.TriggerContext;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * This implementation triggers for each of a {@link java.util.Collection<Date>} date
+ * This implementation of Spring Framework's {@link Trigger trigger} activates
+ * ("triggers") for each instant in the {@link java.util.Collection<Instant>} instants
  * collection.
  *
  * @author Josh Long
@@ -21,13 +23,13 @@ class ScheduleTrigger implements Trigger {
 
 	private final AtomicInteger offset = new AtomicInteger(0);
 
-	private final AtomicReference<List<Date>> datesAtomicReference = new AtomicReference<>(List.of());
+	private final AtomicReference<List<Instant>> datesAtomicReference = new AtomicReference<>(List.of());
 
-	private final AtomicReference<Date> dateAtomicReference;
+	private final AtomicReference<Instant> dateAtomicReference;
 
 	private final Object monitor = new Object();
 
-	ScheduleTrigger(AtomicReference<Date> dateThreadLocal) {
+	ScheduleTrigger(AtomicReference<Instant> dateThreadLocal) {
 		this.dateAtomicReference = dateThreadLocal;
 	}
 
@@ -35,8 +37,8 @@ class ScheduleTrigger implements Trigger {
 	public void refresh(ScheduleRefreshEvent event) {
 		synchronized (this.monitor) {
 			this.offset.set(0);
-			var now = new Date();
-			var dates = event.getSource().stream().distinct().sorted(Date::compareTo).filter(d -> d.after(now))
+			var now = Instant.now();
+			var dates = event.getSource().stream().distinct().sorted(Instant::compareTo).filter(i -> i.isAfter(now))
 					.toList();
 			this.datesAtomicReference.set(dates);
 		}
@@ -47,11 +49,14 @@ class ScheduleTrigger implements Trigger {
 		synchronized (this.monitor) {
 			var dates = this.datesAtomicReference.get();
 			var offset = this.offset.getAndIncrement();
-			var returnDate = (Date) null;
-			if (offset < dates.size())
+			var returnDate = (Instant) null;
+			if (offset < dates.size()) {
 				returnDate = dates.get(offset);
+			}
 			this.dateAtomicReference.set(returnDate);
-			return returnDate;
+			if (null != returnDate)
+				return Date.from(returnDate);
+			return null;
 		}
 	}
 
