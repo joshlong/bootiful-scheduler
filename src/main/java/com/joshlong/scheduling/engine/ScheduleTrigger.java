@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * This implementation of Spring Framework's {@link Trigger trigger} activates
@@ -39,7 +40,7 @@ class ScheduleTrigger implements Trigger {
 			this.offset.set(0);
 			var now = Instant.now();
 			var dates = event.getSource().stream().distinct().sorted(Instant::compareTo).filter(i -> i.isAfter(now))
-					.toList();
+					.collect(Collectors.toList());
 			this.datesAtomicReference.set(dates);
 		}
 	}

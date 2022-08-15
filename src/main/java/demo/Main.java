@@ -10,7 +10,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
