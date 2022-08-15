@@ -11,8 +11,8 @@ Add the dependency (a Spring Boot __starter_) to your build
 ```xml 
 <dependency>
     <groupId>com.joshlong</groupId>
-    <artifactId>scheduling-starter</artifactId>
-    <version>0.1</version>
+    <artifactId>schedule-trigger-starter</artifactId>
+    <version>0.0.1</version>
 </dependency>
 ```
 
