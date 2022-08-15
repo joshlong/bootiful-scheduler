@@ -10,33 +10,34 @@ import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Installs the relevant infrastructure for our
- * {@link org.springframework.scheduling.Trigger}-powered scheduling engine.
- *
- * This is Spring Boot autoconfiguration - there's nothing for the consumer to use,
- * really.
- *
  * @author Josh Long
  */
 @Configuration
 class SchedulingAutoConfiguration {
 
-	private final AtomicReference<Instant> dateAtomicReference = new AtomicReference<>();
+	/**
+	 * Shared by various components in the engine so they can all see the current,
+	 * triggering {@link Instant}
+	 */
+	private final AtomicReference<Instant> currentInstant = new AtomicReference<>();
 
 	@Bean
 	TaskScheduler taskScheduler() {
 		return new TaskSchedulerBuilder().poolSize(10).build();
 	}
 
+	/**
+	 * The custom {@link org.springframework.scheduling.Trigger trigger } implementation
+	 */
 	@Bean
 	ScheduleTrigger scheduleTrigger() {
-		return new ScheduleTrigger(this.dateAtomicReference);
+		return new ScheduleTrigger(this.currentInstant);
 	}
 
 	@Bean
 	DefaultSchedulingService schedulingService(ScheduleTrigger trigger, ApplicationEventPublisher publisher,
 			TaskScheduler taskScheduler) {
-		return new DefaultSchedulingService(this.dateAtomicReference, trigger, publisher, taskScheduler);
+		return new DefaultSchedulingService(this.currentInstant, trigger, publisher, taskScheduler);
 	}
 
 }

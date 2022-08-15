@@ -2,20 +2,36 @@
 
 ## Ideas 
 
-This uses Spring's powerful `Trigger` interface to build a simple scheduling system that _triggers_ when any of the points in time from  a series of `Date` objects comes due. 
+This uses Spring's powerful `Trigger` interface to build a simple scheduling system that _triggers_ when any of the points in time from  a series of `Instant` objects comes due.
 
-I'm imaginging how this might work with the `twitter-service` module, where I want to tweet all the things that need to be tweeted at certain times. But rather than constantly reading from the SQL database, 
-a smart scheduler could ensure that we only do work when it's time to do work. This implementation communicates that work needs to be done by publishing `ApplicationEvent`s. It's also possible for the client that it
-wants new work done (and that the old list of scheduled dates is no longer valid) with `ApplicationEvent` instances. 
+## Usage 
 
-We can use these events to invalidate old state. So, suppose we get a new `ScheduledTweet`. Here, we could simply publish an event with all the existing, unfinished dates _and_ whatever new ones have been added. This will have the effect of cancelling any existing work and enqueing the new stuff. If the existing stuff to be done finishes, and there  are no more callbacks to trigger, then nothing gets done and that's OK. 
+Add the dependency (a Spring Boot __starter_) to your build  
+
+```xml 
+<dependency>
+    <groupId>com.joshlong</groupId>
+    <artifactId>scheduling-starter</artifactId>
+    <version>0.1</version>
+</dependency>
+```
+
+There's now an engine running alongside your code. If you want dispatches at two different `Instant`s in the future, you may either: 
+
+* inject the `SchedulingService` and call `schedule(Collection\<Instant\> instants)` method
+* publish an event of type `ScheduleRefreshEvent` containing zero or more `Instant` references 
+
+Either one of these will have the effect of clearing whatever outstanding callbacks were planned and installing the new callbacks. That is, the effect is _not_ additive. If you had two callbacks for some point in the future but want to add three more, you'll have to resubmit all five. 
+
+Clients can listen for a `ScheduleEvent` in the normal ways:  
+* implement `ApplicationListener\<ScheduleEvent\>`
+* use `@EventListener` 
+
+If you use `@EventListener`, be sure to define a parameter of type `ScheduleEvent` for your handler method. `ScheduleEvent#getSource()` returns the `Instant` that you specified corresponding to the time (roughly) of this callback. 
+
+
+## Warning 
+This code is provided as-is. As far as I know, it works! But don't rely on something like this for anything strictly realtime
 
 
 
-
-## To Do: 
-
-
- * tests 
- * move this to Maven Central so that it's more accessible?  
- * integrate this with `twitter-service`, using the events to manipulate the schedule.
