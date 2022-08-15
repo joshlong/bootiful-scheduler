@@ -13,41 +13,43 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 class SchedulingService implements Runnable {
 
-	private final TaskScheduler taskScheduler;
+    private final TaskScheduler taskScheduler;
 
-	private final ApplicationEventPublisher publisher;
+    private final ApplicationEventPublisher publisher;
 
-	private final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<>();
+    private final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<>();
 
-	private final AtomicReference<Date> publicationTime = new AtomicReference<>();
+    private final AtomicReference<Date> publicationTime = new AtomicReference<>();
 
-	SchedulingService(ApplicationEventPublisher publisher, TaskScheduler taskScheduler) {
-		this.taskScheduler = taskScheduler;
-		this.publisher = publisher;
-	}
+    SchedulingService(ApplicationEventPublisher publisher, TaskScheduler taskScheduler) {
+        this.taskScheduler = taskScheduler;
+        this.publisher = publisher;
+    }
 
-	@EventListener
-	public void refreshSchedule(ScheduleRefreshEvent event) {
-		var list = event.getSource();
-		var scheduledFuture = this.future.get();
-		if (scheduledFuture != null) {
-			var finished = (scheduledFuture.isDone() || scheduledFuture.isCancelled());
-			if (!finished) {
-				var cancelled = scheduledFuture.cancel(true);
-				Assert.isTrue(cancelled || scheduledFuture.isDone() || scheduledFuture.isCancelled(),
-						"the future must at some point complete.");
-				log.debug("we managed to cancel the " + ScheduledFuture.class.getName());
-			}
-		}
-		var scheduleTrigger = new ScheduleTrigger(this.publicationTime, list);
-		var schedule = this.taskScheduler.schedule(this, scheduleTrigger);
-		this.future.set(schedule);
-	}
+    private static boolean isFinished(ScheduledFuture<?> scheduledFuture) {
+        return scheduledFuture.isCancelled() || scheduledFuture.isDone();
+    }
 
-	@Override
-	public void run() {
-		var date = this.publicationTime.get();
-		this.publisher.publishEvent(new ScheduleEvent(date));
-	}
+    @EventListener
+    public void refreshSchedule(ScheduleRefreshEvent event) {
+        var list = event.getSource();
+        var scheduledFuture = this.future.get();
+        if (scheduledFuture != null) {
+            if (!isFinished(scheduledFuture)) {
+                var completed = scheduledFuture.cancel(true) || isFinished(scheduledFuture);
+                Assert.isTrue(completed, "the " + ScheduledFuture.class.getName() + " must at some point complete.");
+                log.debug("we managed to cancel the " + ScheduledFuture.class.getName());
+            }
+        }
+        var scheduleTrigger = new ScheduleTrigger(this.publicationTime, list);
+        var schedule = this.taskScheduler.schedule(this, scheduleTrigger);
+        this.future.set(schedule);
+    }
+
+    @Override
+    public void run() {
+        var date = this.publicationTime.get();
+        this.publisher.publishEvent(new ScheduleEvent(date));
+    }
 
 }
