@@ -47,7 +47,7 @@ class SchedulingHttpController {
 
 	@GetMapping("/schedule")
 	Map<String, Object> schedule() {
-		var later = DateUtils.secondsLater(new Date(), 10);
+		var later = DateUtils.secondsLater(new Date(), 15);
 		this.dates.add(later);
 		this.publisher.publishEvent(new ScheduleRefreshEvent(this.dates));
 		return Map.of("count", this.dates.size());

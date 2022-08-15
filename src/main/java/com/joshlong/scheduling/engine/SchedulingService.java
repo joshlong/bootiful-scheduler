@@ -19,6 +19,8 @@ class SchedulingService implements Runnable {
 
 	private final AtomicReference<ScheduledFuture<?>> future = new AtomicReference<>();
 
+	private final AtomicReference<Date> publicationTime = new AtomicReference<>();
+
 	SchedulingService(ApplicationEventPublisher publisher, TaskScheduler taskScheduler) {
 		this.taskScheduler = taskScheduler;
 		this.publisher = publisher;
@@ -29,18 +31,23 @@ class SchedulingService implements Runnable {
 		var list = event.getSource();
 		var scheduledFuture = this.future.get();
 		if (scheduledFuture != null) {
-			var cancelled = scheduledFuture.cancel(true);
-			Assert.isTrue(cancelled || scheduledFuture.isDone() || scheduledFuture.isCancelled(),
-					"the future must at some point complete.");
-			log.debug("we managed to cancel the " + ScheduledFuture.class.getName());
+			var finished = (scheduledFuture.isDone() || scheduledFuture.isCancelled());
+			if (!finished) {
+				var cancelled = scheduledFuture.cancel(true);
+				Assert.isTrue(cancelled || scheduledFuture.isDone() || scheduledFuture.isCancelled(),
+						"the future must at some point complete.");
+				log.debug("we managed to cancel the " + ScheduledFuture.class.getName());
+			}
 		}
-		var schedule = this.taskScheduler.schedule(this, new ScheduleTrigger(list));
+		var scheduleTrigger = new ScheduleTrigger(this.publicationTime, list);
+		var schedule = this.taskScheduler.schedule(this, scheduleTrigger);
 		this.future.set(schedule);
 	}
 
 	@Override
 	public void run() {
-		this.publisher.publishEvent(new ScheduleEvent(new Date()));
+		var date = this.publicationTime.get();
+		this.publisher.publishEvent(new ScheduleEvent(date));
 	}
 
 }
